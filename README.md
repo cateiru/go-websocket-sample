@@ -1,1 +1,5 @@
-# go-websocket-sample
+# Go Websocket sample
+
+## LICENSE
+
+[MIT](./LICENSE)
