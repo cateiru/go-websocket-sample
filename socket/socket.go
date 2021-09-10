@@ -1,6 +1,7 @@
 package socket
 
 import (
+	"io"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -8,26 +9,37 @@ import (
 )
 
 func Socket(ws *websocket.Conn) {
-	go Send(ws)
+	quit := make(chan bool)
+	go Send(ws, quit)
 
 	for {
 		var response []byte
 		if err := websocket.Message.Receive(ws, &response); err != nil {
-			logrus.Errorf("receive err: %v", err)
+			if err == io.EOF {
+				quit <- true
+				logrus.Info("Close...")
+			}else {
+				logrus.Errorf("receive err: %v", err)
+			}
 			return
 		}
 		logrus.Infof("Response to %v", string(response))
 	}
 }
 
-func Send(ws *websocket.Conn) {
+func Send(ws *websocket.Conn, quit chan bool) {
 	sendData := "hoge"
 	for {
-		if err := websocket.Message.Send(ws, sendData); err != nil {
-			logrus.Errorf("send err: %v", err)
+		select {
+		case <- quit:
 			return
+		default:
+			if err := websocket.Message.Send(ws, sendData); err != nil {
+				logrus.Errorf("send err: %v", err)
+				return
+			}
+			logrus.Info("send!")
+			time.Sleep(3 * time.Second)
 		}
-		logrus.Info("send!")
-		time.Sleep(3 * time.Second)
 	}
 }
