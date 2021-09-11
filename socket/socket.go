@@ -9,6 +9,8 @@ import (
 )
 
 func Socket(ws *websocket.Conn) {
+	defer logrus.Info("Close socket!")
+
 	quit := make(chan bool)
 	go Send(ws, quit)
 
