@@ -1,12 +1,15 @@
 package socket
 
 import (
+	"fmt"
 	"io"
 	"time"
 
 	"github.com/sirupsen/logrus"
 	"golang.org/x/net/websocket"
 )
+
+var datas = make(map[string]*string)
 
 func Socket(ws *websocket.Conn) {
 	defer logrus.Info("Close socket!")
@@ -30,18 +33,39 @@ func Socket(ws *websocket.Conn) {
 }
 
 func Send(ws *websocket.Conn, quit chan bool) {
-	sendData := "hoge"
+	datas["hoge"] = new(string)
+	data := ""
+
 	for {
 		select {
 		case <- quit:
 			return
 		default:
-			if err := websocket.Message.Send(ws, sendData); err != nil {
-				logrus.Errorf("send err: %v", err)
-				return
+			if data != *datas["hoge"] {
+				if err := websocket.Message.Send(ws, *datas["hoge"]); err != nil {
+					logrus.Errorf("send err: %v", err)
+					return
+				}
+				logrus.Info("send!")
+
+				data = *datas["hoge"]
 			}
-			logrus.Info("send!")
 			time.Sleep(3 * time.Second)
 		}
+	}
+}
+
+
+func Runner() {
+	var index = 0
+
+	for {
+		for id, value := range datas {
+			if id == "hoge" {
+				*value = fmt.Sprint(index)
+			}
+		}
+		time.Sleep(3 * time.Second)
+		index++
 	}
 }

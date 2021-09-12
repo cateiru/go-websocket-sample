@@ -10,6 +10,8 @@ import (
 
 func main() {
 	http.Handle("/", websocket.Handler(socket.Socket))
+	go socket.Runner()
+
 	logrus.Info("start server to :8080")
 	logrus.Fatal(http.ListenAndServe(":8080", nil))
 }
